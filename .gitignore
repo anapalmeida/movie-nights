@@ -56,8 +56,5 @@ cython_debug/
 # Environment variables
 .env
 
-database/watchlists/watchlist_1.csv
-database/watchlists/watchlist_2.csv
-
 matching_movies.csv
 matching_movies.json
