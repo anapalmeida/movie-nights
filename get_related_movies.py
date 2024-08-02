@@ -3,9 +3,11 @@ import os
 import requests
 
 from get_movie_genre import get_movie_genre
+from get_cast_n_crew import get_cast_n_crew
 from get_watching_providers import get_watching_providers
 
 load_dotenv()
+
 
 def get_related_movies(movie_id, language):
     api_url = os.getenv("TMDB_API_URL")
@@ -26,24 +28,34 @@ def get_related_movies(movie_id, language):
         formatted_results = []
 
         for movie in results:
+
+            cast_and_crew = get_cast_n_crew(movie.get("id"))
+
             formatted_movie = {
                 "id": movie.get("id") or None,
                 "name": movie.get("title") or None,
-                "year": int(movie.get("release_date", "0000-00-00").split("-")[0]) or None,
-                "poster": f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{movie.get('poster_path', '')}" or None,
-                "overview": movie.get("overview") or None,
+                "year": int(movie.get("release_date", "0000-00-00").split("-")[0])
+                or None,
+                "poster": f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{movie.get('poster_path', '')}"
+                or None,
+                "overview": movie.get("overview") or 'oi',
+                "cast_and_crew": cast_and_crew,
                 "popularity": movie.get("popularity") or None,
                 "rating": movie.get("vote_average") or None,
             }
 
-            genre_names = [get_movie_genre(genre_id).get("name") for genre_id in movie.get("genre_ids", []) if get_movie_genre(genre_id)]
-            formatted_movie["genre"] = ", ".join(genre_names)
+            genre_names = [
+                get_movie_genre(genre_id).get("name")
+                for genre_id in movie.get("genre_ids", [])
+                if get_movie_genre(genre_id)
+            ]
 
+            formatted_movie["genre"] = ", ".join(genre_names)
 
             formatted_movie["genre"] = ", ".join(genre_names)
 
             providers = get_watching_providers(movie.get("id"), "BR")
-            
+
             if providers:
                 formatted_movie["providers"] = providers
 

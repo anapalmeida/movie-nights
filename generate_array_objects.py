@@ -8,6 +8,6 @@ def generate_array_objects(csv_file_path):
 
     json_records = df.to_dict(orient="records")
 
-    wrapped_data = {"data": json_records}
+    wrapped_data = json_records
 
     return wrapped_data
