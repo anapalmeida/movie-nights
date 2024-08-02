@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def read_and_generate_csv():
+def read_and_generate_csv(watchlist_1_pathname, watchlist_2_pathname):
 
-    df1 = pd.read_csv(os.getenv("DATASET_WATCHLIST_1_PATHNAME"))
-    df2 = pd.read_csv(os.getenv("DATASET_WATCHLIST_2_PATHNAME"))
+    df1 = pd.read_csv(watchlist_1_pathname)
+    df2 = pd.read_csv(watchlist_2_pathname)
 
     matching_movies = pd.merge(df1, df2, on="Name", how="inner", suffixes=("_1", "_2"))
 
