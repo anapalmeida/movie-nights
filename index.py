@@ -12,4 +12,5 @@ watchlist_2 = os.getenv("DATASET_WATCHLIST_2_PATHNAME")
 
 bar = get_matching_movies(watchlist_1, watchlist_2)
 print(bar)
+
 foo = get_related_movies('19', "en-US")
