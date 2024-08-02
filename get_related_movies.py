@@ -7,7 +7,7 @@ from get_watching_providers import get_watching_providers
 
 load_dotenv()
 
-def get_related_movies(movie_id, locale):
+def get_related_movies(movie_id, language):
     api_url = os.getenv("TMDB_API_URL")
     api_token = os.getenv("TMDB_API_TOKEN")
 
@@ -15,7 +15,7 @@ def get_related_movies(movie_id, locale):
         print("API URL or Token not found in .env file")
         return None
 
-    api_url += f"/movie/{movie_id}/recommendations?language={locale}&page=1"
+    api_url += f"/movie/{movie_id}/recommendations?language={language}&page=1"
 
     headers = {"accept": "application/json", "Authorization": f"Bearer {api_token}"}
 
