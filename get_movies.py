@@ -72,7 +72,7 @@ class TMDBAPI:
         read_and_generate_csv(watchlist_1_pathname, watchlist_2_pathname)
         matching_movies = pd.read_csv("matching_movies.csv")
         columns_to_initialize = [
-            "ID", "Poster", "Overview", "Popularity", "Rating", "Genre", "Providers",
+            "ID", "Poster", "Overview", "Cast and Crew", "Popularity", "Rating", "Genre", "Providers",
         ]
         for column in columns_to_initialize:
             matching_movies[column] = pd.NA
@@ -90,6 +90,7 @@ class TMDBAPI:
                 id = movie.get("id")
                 poster = movie.get("poster_path")
                 overview = movie.get("overview")
+                cast_and_crew = self.get_movie_cast_n_crew(id)
                 popularity = movie.get("popularity")
                 rating = movie.get("vote_average")
                 genre_ids = movie.get("genre_ids", [])
@@ -107,6 +108,7 @@ class TMDBAPI:
                     self.api_images_url + poster if poster else pd.NA
                 )
                 matching_movies.at[index, "Overview"] = overview
+                matching_movies.at[index, "Cast and Crew"] = cast_and_crew
                 matching_movies.at[index, "Popularity"] = popularity
                 matching_movies.at[index, "Rating"] = rating
                 matching_movies.at[index, "Genre"] = ", ".join(genre_names)
@@ -118,7 +120,7 @@ class TMDBAPI:
             sys.stdout.write("\n")
 
         columns = [
-            "ID", "Name", "Year", "Poster", "Overview", "Popularity", "Rating", "Genre", "Providers",
+            "ID", "Name", "Year", "Poster", "Overview", "Cast and Crew", "Popularity", "Rating", "Genre", "Providers",
         ]
         matching_movies = matching_movies[columns]
 
