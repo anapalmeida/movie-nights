@@ -1,14 +1,10 @@
 import pandas as pd
-import os
-
-from generate_csv import generate_csv
 from dotenv import load_dotenv
+from utils.generate_csv import generate_csv
 
 load_dotenv()
 
-
 def read_and_generate_csv(watchlist_1_pathname, watchlist_2_pathname):
-
     df1 = pd.read_csv(watchlist_1_pathname)
     df2 = pd.read_csv(watchlist_2_pathname)
 
@@ -21,6 +17,6 @@ def read_and_generate_csv(watchlist_1_pathname, watchlist_2_pathname):
 
     matching_movies = matching_movies[["Name", "Year"]]
 
-    matching_movies = generate_csv(matching_movies, "matching_movies.csv")
+    generate_csv(matching_movies, "matching_movies.csv")
 
     return matching_movies

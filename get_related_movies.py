@@ -1,13 +1,11 @@
+from get_movies import TMDBAPI
 from dotenv import load_dotenv
 import os
 import requests
 
-from get_movie_genre import get_movie_genre
-from get_cast_n_crew import get_cast_n_crew
-from get_watching_providers import get_watching_providers
+tmdb_api = TMDBAPI()
 
 load_dotenv()
-
 
 def get_related_movies(movie_id, language):
     api_url = os.getenv("TMDB_API_URL")
@@ -28,9 +26,8 @@ def get_related_movies(movie_id, language):
         formatted_results = []
 
         for movie in results:
-
-            cast_and_crew = get_cast_n_crew(movie.get("id"))
-
+            cast_and_crew = tmdb_api.get_movie_cast_n_crew(movie.get("id"))
+            
             formatted_movie = {
                 "id": movie.get("id") or None,
                 "name": movie.get("title") or None,
@@ -38,23 +35,21 @@ def get_related_movies(movie_id, language):
                 or None,
                 "poster": f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{movie.get('poster_path', '')}"
                 or None,
-                "overview": movie.get("overview") or 'oi',
+                "overview": movie.get("overview") or 'No overview available',
                 "cast_and_crew": cast_and_crew,
                 "popularity": movie.get("popularity") or None,
                 "rating": movie.get("vote_average") or None,
             }
 
             genre_names = [
-                get_movie_genre(genre_id).get("name")
+                tmdb_api.get_movie_genre(genre_id).get("name")
                 for genre_id in movie.get("genre_ids", [])
-                if get_movie_genre(genre_id)
+                if tmdb_api.get_movie_genre(genre_id)
             ]
 
             formatted_movie["genre"] = ", ".join(genre_names)
 
-            formatted_movie["genre"] = ", ".join(genre_names)
-
-            providers = get_watching_providers(movie.get("id"), "BR")
+            providers = tmdb_api.get_movie_watching_providers(movie.get("id"), "BR")
 
             if providers:
                 formatted_movie["providers"] = providers
