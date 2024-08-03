@@ -3,8 +3,9 @@ import requests
 import sys
 import os
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import cachetools
 
-from utils.print_loading_screen import print_loading_animation
 from utils.read_and_generate_csv import read_and_generate_csv
 
 load_dotenv()
@@ -14,6 +15,7 @@ class TMDBAPI:
         self.api_url = os.getenv("TMDB_API_URL")
         self.api_token = os.getenv("TMDB_API_TOKEN")
         self.api_images_url = os.getenv("TMDB_IMAGES_API_URL")
+        self.cache = cachetools.LRUCache(maxsize=100)
         if not self.api_url or not self.api_token:
             print("API URL or Token not found in .env file")
             sys.exit()
@@ -21,21 +23,31 @@ class TMDBAPI:
     def _get(self, endpoint, params=None):
         url = f"{self.api_url}{endpoint}"
         headers = {"accept": "application/json", "Authorization": f"Bearer {self.api_token}"}
+        cache_key = (url, frozenset(params.items()) if params else None)
+        
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+        
         response = requests.get(url, headers=headers, params=params)
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            self.cache[cache_key] = data
+            return data
         print("Error:", response.status_code, response.text)
         return None
 
-    def get_movie_genre(self, genre_id):
+    def _batch_get_genres(self, genre_ids):
         response = self._get("/genre/movie/list", {"language": "en-US"})
-        if response:
-            genres = response.get("genres", [])
-            for genre in genres:
-                if genre["id"] == genre_id:
-                    return genre
-            print(f"Genre with ID {genre_id} not found")
-        return None
+        if not response:
+            return {}
+        
+        genres = response.get("genres", [])
+        genre_map = {genre["id"]: genre for genre in genres}
+        return {genre_id: genre_map.get(genre_id) for genre_id in genre_ids}
+
+    def get_movie_genre(self, genre_id):
+        genres = self._batch_get_genres([genre_id])
+        return genres.get(genre_id)
 
     def get_movie_watching_providers(self, movie_id, locale):
         response = self._get(f"/movie/{movie_id}/watch/providers")
@@ -71,6 +83,7 @@ class TMDBAPI:
     def set_movie_info(self, watchlist_1_pathname, watchlist_2_pathname):
         read_and_generate_csv(watchlist_1_pathname, watchlist_2_pathname)
         matching_movies = pd.read_csv("matching_movies.csv")
+        
         columns_to_initialize = [
             "ID", "Poster", "Overview", "Cast and Crew", "Popularity", "Rating", "Genre", "Providers",
         ]
@@ -80,11 +93,17 @@ class TMDBAPI:
         # Uncomment this line when you have the loading animation implemented
         # stop_event = print_loading_animation("Fetching and rearranging movies data...")
 
-        try:
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {}
             for index, row in matching_movies.iterrows():
-                movie = self.get_movie_info(row["Year"], row["Name"])
+                movie_future = executor.submit(self.get_movie_info, row["Year"], row["Name"])
+                futures[movie_future] = index
+
+            for future in as_completed(futures):
+                index = futures[future]
+                movie = future.result()
                 if not movie:
-                    print(f"Movie not found: {row['Name']} {row['Year']}")
+                    print(f"Movie not found: {matching_movies.at[index, 'Name']} {matching_movies.at[index, 'Year']}")
                     continue
 
                 id = movie.get("id")
@@ -113,11 +132,6 @@ class TMDBAPI:
                 matching_movies.at[index, "Rating"] = rating
                 matching_movies.at[index, "Genre"] = ", ".join(genre_names)
                 matching_movies.at[index, "Providers"] = providers
-
-        finally:
-            # Uncomment this line when you have the loading animation implemented
-            # stop_event.set()
-            sys.stdout.write("\n")
 
         columns = [
             "ID", "Name", "Year", "Poster", "Overview", "Cast and Crew", "Popularity", "Rating", "Genre", "Providers",
