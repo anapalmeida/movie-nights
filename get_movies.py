@@ -90,9 +90,6 @@ class TMDBAPI:
         for column in columns_to_initialize:
             matching_movies[column] = pd.NA
 
-        # Uncomment this line when you have the loading animation implemented
-        # stop_event = print_loading_animation("Fetching and rearranging movies data...")
-
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = {}
             for index, row in matching_movies.iterrows():

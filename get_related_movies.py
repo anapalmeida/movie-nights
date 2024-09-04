@@ -27,13 +27,14 @@ def get_related_movies(movie_id, language):
 
         for movie in results:
             cast_and_crew = tmdb_api.get_movie_cast_n_crew(movie.get("id"))
+            api_images_url = os.getenv("TMDB_IMAGES_API_URL")
             
             formatted_movie = {
                 "id": movie.get("id") or None,
                 "name": movie.get("title") or None,
                 "year": int(movie.get("release_date", "0000-00-00").split("-")[0])
                 or None,
-                "poster": f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{movie.get('poster_path', '')}"
+                "poster": f"{api_images_url}{movie.get('poster_path', '')}"
                 or None,
                 "overview": movie.get("overview") or 'No overview available',
                 "cast_and_crew": cast_and_crew,
